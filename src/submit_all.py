@@ -4,8 +4,8 @@ import os
 test_targs = json.load(open('binding-sites/data/test_set_A.json', 'r'))
 print('Test targets:', len(test_targs))
 
-for num in [1, 5, 10, 20, 40]:
-    for targ in test_targs[:10]:
+for num in [5, 10, 30]:
+    for targ in test_targs:
         bash_path = f'/data/xchem-fragalysis/tyt15771/projects/frag/binding-sites/submissions/{targ}_{num}.sh'
         bash_template = open('binding-sites/src/run_all.sh', 'r').read()
         new_bash = bash_template.replace('$1', targ)
@@ -22,5 +22,3 @@ for num in [1, 5, 10, 20, 40]:
             w.write(new_submission)
 
         os.system(f'condor_submit {submission_path}')
-
-    break
