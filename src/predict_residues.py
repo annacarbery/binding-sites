@@ -23,39 +23,31 @@ def get_index_coords(pdb_path, chain):
 def load_models(num_models):
     models = []
     for i in range(num_models):
-        models.append(pickle.load(open(f'HOLO4K/models/lgbm_2803/lgbm_if1_{i}.pkl', 'rb')))
+        models.append(pickle.load(open(f'models/lgbm_if1_{i}.pkl', 'rb')))
     return models
 
 
-model, alphabet = esm.pretrained.load_model_and_alphabet_local('/data/xchem-fragalysis/tyt15771/projects/esm/esm_if1_gvp4_t16_142M_UR50.pt')
+model, alphabet = esm.pretrained.load_model_and_alphabet_local('/Users/tyt15771/.cache/torch/hub/checkpoints/esm_if1_gvp4_t16_142M_UR50.pt')
 model.eval()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target')
-parser.add_argument('-num_models', '--models')
-parser.add_argument('-af2', '--af2')
 args = parser.parse_args()
 target = args.target
-num_models = int(args.models)
-af2 = True if int(args.af2) == 1 else 0
 
-if not os.path.isdir(f'binding-sites/predictions/{target}'):
-    os.mkdir(f'binding-sites/predictions/{target}')
+if not os.path.isdir(f'predictions/{target}'):
+    os.mkdir(f'predictions/{target}')
 
-models = load_models(num_models)
+models = load_models(40)
 preds = {}
 
-if af2 == False:
-    pdb = f'HOLO4K/HOLO4k_data/orig_pdb/{target}.pdb'
-else:
-    strucs = [i for i in os.listdir('HOLO4K/datafiles/af2/aligned') if target in i]
-    pdb = f'HOLO4K/datafiles/af2/aligned/{strucs[0]}'
+pdb = f'input/{target}.pdb'
 
 chains = sorted(get_chains(pdb))
 preds[pdb] = {}
-
+print('Target:', target)
 for chain in chains[:1]:
-    print(chain)	
+    print('Chain:', chain )	
 
     structure = esm.inverse_folding.util.load_structure(pdb, chain)
     coords_resi = get_index_coords(pdb, chain)
@@ -82,8 +74,5 @@ for chain in chains[:1]:
             except:
                 pass
     preds[pdb][chain] = res_nums
-    print(pdb, chain, res_nums, len(res_nums))
-    if af2 == False:
-        json.dump([res_nums, chain], open(f'binding-sites/predictions/{target}/predicted_residues_xtal_{num_models}.json', 'w'))
-    else:
-        json.dump([res_nums, chain], open(f'binding-sites/predictions/{target}/predicted_residues_af2_{num_models}.json', 'w'))
+    print('Number of predicted binding residues:', len(res_nums))
+    json.dump([res_nums, chain], open(f'predictions/{target}/predicted_residues.json', 'w'))

@@ -41,24 +41,20 @@ def write_coords(coords, filename):
             w.write(f'PS {c[0]:.3f} {c[1]:.3f} {c[2]:.3f}\n')
 
 
-def get_final_cloud(pdb_xtal, pdb_af2, af2, target, final_preds, chain):
+def get_final_cloud(pdb, target, final_preds, chain):
     """
     extracts points in point cloud that are close to protein residues that have been predicted to be druggable
     """
-    cmd.load(pdb_xtal, 'complex')
+    cmd.load(pdb, 'complex')
     cmd.extract('hets', 'complex and HETATM')
     cmd.delete('hets')
     cmd.extract('chA', f'complex and chain {chain}')
-    if af2 == True:
-        cmd.delete('chA')
-        cmd.load(pdb_af2, 'chA')
 
     coords = np.array(cmd.get_coords('chA')) 
     write_xyz(coords, target)
     assert os.path.exists(f'xyz/xyz_{target}.xyz')
     cmd.load(f'xyz/xyz_{target}.xyz','cloud1')
 
-    cmd.extract('cloud2', 'cloud1 within 3 of prot') # don't want these
     cmd.extract('cloud3', 'cloud1 within 3 of chA')
     cmd.extract('cloud_bubble', 'cloud1 within 6 of chA') # don't want these
 
@@ -83,33 +79,27 @@ def get_final_cloud(pdb_xtal, pdb_af2, af2, target, final_preds, chain):
     coord_list = [','.join([str(n) for n in i]) for i in coords]
     repeats = list(sorted([i for i in coord_list if coord_list.count(i) > 2]))
     repeats = np.array([[float(x) for x in c.split(',')] for c in repeats])
-    # write_repeats(repeats)
 
     return repeats
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target')
-parser.add_argument('-num_models', '--models')
-parser.add_argument('-af2', '--af2')
 args = parser.parse_args()
 target = args.target
-num_models = int(args.models)
-af2 = True if int(args.af2) == 1 else 0
+num_models = 40
 
-pdb_xtal= f'HOLO4K/HOLO4k_data/orig_pdb/{target}.pdb'
-strucs = [i for i in os.listdir('HOLO4K/datafiles/af2/aligned') if target in i]
-pdb_af2 = f'HOLO4K/datafiles/af2/aligned/{strucs[0]}'
-struc_type = 'xtal' if af2 == False else 'af2'
+pdb= f'input/{target}.pdb'
 
-print(target)
-[preds, chain] = json.load(open(f'binding-sites/predictions/{target}/predicted_residues_{struc_type}_{num_models}.json', 'r'))
+
+print('Target:', target)
+[preds, chain] = json.load(open(f'predictions/{target}/predicted_residues.json', 'r'))
 
 site_success = []
 
 try:
     cmd.reinitialize()
-    final_coords = get_final_cloud(pdb_xtal, pdb_af2, af2, target, preds, chain)
+    final_coords = get_final_cloud(pdb, target, preds, chain)
 
     # cluster coordinates (that have been repeated by different residues) with a maximum distance threshold of 1.5A
     clustering = DBSCAN(eps=1.7, min_samples=2).fit(final_coords)
@@ -128,27 +118,18 @@ try:
 
         # get coordinates of points in selected site, and calculate the centre by taking the mean of all points in the site
         main_site = np.array([final_coords[i] for i in range(len(final_coords)) if clustering.labels_[i] == biggest])
-        write_coords(main_site, f'binding-sites/predictions/{target}/site_rank_{site_rank}_{struc_type}_{num_models}.xyz')
+        write_coords(main_site, f'predictions/{target}/site_rank_{site_rank+1}.xyz')
         centre = np.array([np.mean(main_site[:,0]), np.mean(main_site[:,1]), np.mean(main_site[:,2])])
 
-        with open(f'binding-sites/predictions/{target}/centre_rank_{site_rank}_{struc_type}_{num_models}.xyz', 'w') as w:
+        with open(f'predictions/{target}/centre_rank_{site_rank+1}.xyz', 'w') as w:
             w.write(f'1\npoint\n')
             w.write(f'PS {centre[0]:.3f} {centre[1]:.3f} {centre[2]:.3f}\n')
+            print(site_rank+1, 'centre', f'{centre[0]:.3f} {centre[1]:.3f} {centre[2]:.3f}')
 
 
         del site_counts[biggest]
 
-        cmd.reinitialize()
-        cmd.load(f'binding-sites/predictions/{target}/centre_rank_{site_rank}_{struc_type}_{num_models}.xyz', 'centre')
-        cmd.load(pdb_xtal, 'complex')
-        lig_names = [i.split('_')[0] for i in open(f'/data/xchem-fragalysis/tyt15771/projects/frag/HOLO4K/HOLO4k_data/data/{target}.ligand', 'r').readlines() if len(i.strip()) > 2]
-        print('ligands:', list(set(lig_names)))
-        cmd.extract('lig', f'complex and (resn {" or resn ".join(lig_names)})')
-        success =  cmd.count_atoms('lig within 4 of centre') > 0
-        print(site_rank, biggest, centre, success)
-        site_success.append(str(success))
+    
 except:
-    print(target, num_models, struc_type, 'error')
+    print(target, num_models, 'error')
 
-with open(f'binding-sites/predictions/{target}/success_{struc_type}_{num_models}.txt', 'w') as w:
-    w.write('\n'.join(site_success))
