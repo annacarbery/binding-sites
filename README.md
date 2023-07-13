@@ -4,8 +4,14 @@ IF-SitePred is a method for predicting ligand-binding sites on protein structure
 
 ## Installation
 
-Follow the following steps to prepare a virtual environment for IF-SitePred:
+Follow the following steps to prepare two virtual environments for IF-SitePred:
 
+#### A) Clone repository
+```
+git clone https://github.com/annacarbery/binding-sites
+```
+
+#### B) Create environment containining ESM
 1. Install esm
 ```
 pip install fair-esm
@@ -19,12 +25,20 @@ pip install torch_scatter
 pip install biotite
 pip install lightgbm
 ```
-4. Clone repository
-```
-git clone https://github.com/annacarbery/binding-sites
-```
+
+#### C) Create environment containing PyMOL
 
 ## Command line use
+
+1. Place PDB file of target of interest in 'input' directory
+2. Activate environment with ESM installed
+3. Run residue prediction script:
+```python src/predict_residues.py -t <target_name>```
+4. The residues predicted to be binding are saved in the 'predictions' directory
+5. Activate environment with PyMOL installed
+6. Run centre prediction script:
+```python src/predict_centres.py -t <target_name>```
+7. The three top-ranked sites and their centres will be saved in the 'predictions' directory
 
 ## Citation
 
