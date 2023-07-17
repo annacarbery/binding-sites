@@ -22,7 +22,7 @@ conda activate esm_env
 ```
 pip install fair-esm
 ```
-3. Install [torch](https://pytorch.org/) (system-dependent)
+3. Install [torch](https://pytorch.org/) (system-dependent, see instructions in torch documentation)
 4. Install remaining dependencies
 ```
 pip install scipy
