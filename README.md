@@ -27,9 +27,10 @@ pip install fair-esm
 ```
 pip install scipy
 pip install torch-geometric
-pip install torch_scatter
+pip install torch-scatter
 pip install biotite
 pip install lightgbm
+pip install scikit-learn
 ```
 
 #### C) Create environment containing PyMOL
@@ -53,6 +54,10 @@ conda activate pymol_env
 6. Run centre prediction script:
 ```python src/predict_centres.py -t <target_name>```
 7. The three top-ranked sites and their centres will be saved in the 'predictions' directory
+
+## Issues
+
+Please report issues at https://github.com/oxpig/binding-sites 
 
 ## Citation
 
