@@ -38,6 +38,7 @@ pip install scikit-learn
 1. Create and activate virutal environment with pymol installed
 ```
 conda create -n pymol_env -c conda-forge -c schrodinger pymol-bundle -y
+conda install -c conda-forge scikit-learn
 conda activate pymol_env
  ```
 
