@@ -56,4 +56,5 @@ conda activate pymol_env
 
 ## Citation
 
-In progress...
+Carbery, A., Buttenschoen, M., Skyner, R. et al. Learnt representations of proteins can be used for accurate prediction of small molecule binding sites on experimentally determined and predicted protein structures. J Cheminform 16, 32 (2024). https://doi.org/10.1186/s13321-024-00821-4 
+
